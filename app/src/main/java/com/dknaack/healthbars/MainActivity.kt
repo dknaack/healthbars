@@ -378,6 +378,7 @@ fun CreateHealthBarScreen(
         floatingActionButton = {
             FloatingActionButton(onClick = {
                 onCreateHealthBar(HealthBar(
+                    id = System.currentTimeMillis(),
                     name = name,
                     duration = Period.of(
                         years.toInt(),
