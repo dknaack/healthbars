@@ -93,9 +93,9 @@ class MainActivity : ComponentActivity() {
         println("Testing testing 123")
 
         setContent {
-            var navController = rememberNavController()
+            val navController = rememberNavController()
 
-            var healthBars: SnapshotStateList<HealthBar> = remember {
+            val healthBars: SnapshotStateList<HealthBar> = remember {
                 mutableStateListOf(
                     HealthBar(
                         id = 1,
@@ -373,6 +373,15 @@ fun CreateHealthBarScreen(
     var months by remember { mutableStateOf("0") }
     var years by remember { mutableStateOf("0") }
 
+    var showDatePicker by remember { mutableStateOf(false) }
+    val datePickerState = rememberDatePickerState()
+    val dateFormatter = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)
+    val startDate = datePickerState.selectedDateMillis?.let {
+        val instant = Instant.ofEpochMilli(it)
+        val zoneId = ZoneId.systemDefault()
+        instant.atZone(zoneId).toLocalDate()
+    } ?: LocalDate.now()
+
     Scaffold(
         topBar = { TopAppBar(title = { Text("Create New Health Bar") }) },
         floatingActionButton = {
@@ -385,7 +394,7 @@ fun CreateHealthBarScreen(
                         months.toInt(),
                         days.toInt()
                     ),
-                    startDate = LocalDate.now())
+                    startDate = startDate)
                 )
                 navController.navigate("healthBarList")
             }) {
@@ -400,12 +409,36 @@ fun CreateHealthBarScreen(
                 .padding(innerPadding)
                 .padding(16.dp),
         ) {
+            // Name Input
             TextField(
                 value = name,
                 onValueChange = { name = it },
                 label = { Text("Name") },
                 modifier = Modifier.fillMaxWidth(),
             )
+
+            // Start Date Input
+            Box(
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                TextField(
+                    modifier = Modifier.fillMaxWidth(),
+                    value = dateFormatter.format(startDate),
+                    onValueChange = { },
+                    label = { Text("Starting Date") },
+                    readOnly = true,
+                    trailingIcon = {
+                        IconButton(onClick = { showDatePicker = !showDatePicker }) {
+                            Icon(
+                                imageVector = Icons.Default.DateRange,
+                                contentDescription = "Select date",
+                            )
+                        }
+                    }
+                )
+            }
+
+            // Period Input
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -428,6 +461,30 @@ fun CreateHealthBarScreen(
                     label = { Text("Days") },
                     modifier = Modifier.weight(1f),
                 )
+            }
+
+            if (showDatePicker) {
+                DatePickerDialog(
+                    onDismissRequest = { },
+                    confirmButton = {
+                        TextButton(onClick = {
+                            println("Confirmed!")
+                            showDatePicker = false
+                        }) {
+                            Text("OK")
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = {
+                            println("dismissed")
+                            showDatePicker = false
+                        }) {
+                            Text("Cancel")
+                        }
+                    }
+                ) {
+                    DatePicker(state = datePickerState)
+                }
             }
         }
     }
