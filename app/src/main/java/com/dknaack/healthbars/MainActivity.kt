@@ -1,22 +1,18 @@
 package com.dknaack.healthbars
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
+import android.graphics.drawable.Icon
 import android.os.Bundle
-import android.widget.NumberPicker
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
-import androidx.annotation.experimental.Experimental
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.EnterTransition
-import androidx.compose.animation.slideIn
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
-import androidx.compose.foundation.Image
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -30,63 +26,65 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.text.input.rememberTextFieldState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material3.Card
-import androidx.compose.material3.ColorScheme
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material3.Button
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.SwipeToDismissBox
-import androidx.compose.material3.SwipeToDismissBoxState
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberSwipeToDismissBoxState
+import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.State
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.dknaack.healthbars.ui.theme.HealthBarsTheme
-import java.text.DateFormat
+import java.time.Instant
 import java.time.LocalDate
-import java.time.LocalTime
 import java.time.Period
+import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import java.time.temporal.ChronoUnit
 import kotlin.math.max
 import kotlin.math.min
-import kotlin.time.Duration
 
 class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
@@ -148,13 +146,33 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+@Composable
+fun BottomSheetButton(
+    imageVector: ImageVector,
+    contentDescription: String,
+    text: String,
+    onClick: () -> Unit,
+) {
+    ListItem(
+        leadingContent = { Icon(imageVector, contentDescription) },
+        headlineContent = { Text(text) },
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        colors = ListItemDefaults.colors(
+            containerColor = Color.Transparent,
+        )
+    )
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HealthBarListScreen(
     healthBars: SnapshotStateList<HealthBar>,
     navController: NavController,
-    modifier: Modifier = Modifier,
 ) {
+    var contextHealthBarId by rememberSaveable { mutableStateOf<Long?>(null) }
+
     Scaffold(
         topBar = {
             TopAppBar(title = {
@@ -177,8 +195,38 @@ fun HealthBarListScreen(
                 HealthBarCard(
                     healthBar = healthBar,
                     onRemove = { healthBars -= healthBar },
+                    onEdit = { contextHealthBarId = healthBar.id },
                     modifier = Modifier.animateItem(),
                 )
+            }
+        }
+
+        if (contextHealthBarId != null) {
+            ModalBottomSheet(
+                onDismissRequest = {
+                    contextHealthBarId = null
+                }
+            ) {
+                Column {
+                    BottomSheetButton(
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = "Edit",
+                        text = "Edit",
+                        onClick = { println("Edit") }
+                    )
+                    BottomSheetButton(
+                        imageVector = Icons.Default.Refresh,
+                        contentDescription = "Refresh",
+                        text = "Refresh",
+                        onClick = { println("Refresh") }
+                    )
+                    BottomSheetButton(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = "Delete",
+                        text = "Delete",
+                        onClick = { println("Delete") }
+                    )
+                }
             }
         }
     }
@@ -191,10 +239,12 @@ data class HealthBar(
     val startDate: LocalDate,
 )
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun HealthBarCard(
     healthBar: HealthBar,
     onRemove: (HealthBar) -> Unit,
+    onEdit: (HealthBar) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     // Calculate the progress
@@ -238,6 +288,8 @@ fun HealthBarCard(
         }
     )
 
+    val haptics = LocalHapticFeedback.current
+
     SwipeToDismissBox (
         state = swipeToDismissBoxState,
         modifier = modifier
@@ -275,6 +327,16 @@ fun HealthBarCard(
             exit = slideOutHorizontally(),
         ) {
             ListItem(
+                modifier = Modifier.combinedClickable(
+                    onClick = {
+                        println("Clicked ${healthBar.id}")
+                    },
+                    onLongClick = {
+                        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                        onEdit(healthBar)
+                    },
+                    onLongClickLabel = "Edit",
+                ),
                 headlineContent = { Text(healthBar.name) },
                 supportingContent = {
                     Column(
