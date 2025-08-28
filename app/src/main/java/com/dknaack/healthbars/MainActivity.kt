@@ -100,21 +100,25 @@ class MainActivity : ComponentActivity() {
             var healthBars: SnapshotStateList<HealthBar> = remember {
                 mutableStateListOf(
                     HealthBar(
+                        id = 1,
                         name = "Foo",
                         duration = Period.ofDays(10),
                         startDate = LocalDate.now().minusDays(1),
                     ),
                     HealthBar(
+                        id = 2,
                         name = "Bar",
                         duration = Period.ofDays(8),
                         startDate = LocalDate.now().minusDays(2),
                     ),
                     HealthBar(
+                        id = 3,
                         name = "Baz",
                         duration = Period.ofDays(5),
                         startDate = LocalDate.now().minusDays(3),
                     ),
                     HealthBar(
+                        id = 4,
                         name = "Example",
                         duration = Period.ofDays(10),
                         startDate = LocalDate.now().minusDays(4),
@@ -181,6 +185,7 @@ fun HealthBarListScreen(
 }
 
 data class HealthBar(
+    val id: Long,
     val name: String,
     val duration: Period,
     val startDate: LocalDate,
