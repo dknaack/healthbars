@@ -305,6 +305,15 @@ data class HealthBar(
     val startDate: LocalDate,
 )
 
+@Composable
+fun HealthBarIndicator(healthBar: HealthBar) {
+    LinearProgressIndicator(
+        drawStopIndicator = { },
+        progress = { healthBar.getProgress() },
+        modifier = Modifier.fillMaxWidth().height(16.dp),
+    )
+}
+
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun HealthBarCard(
