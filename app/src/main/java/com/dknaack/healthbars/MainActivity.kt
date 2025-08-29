@@ -320,20 +320,16 @@ fun HealthBarCard(
     healthBar: HealthBar,
     onRemove: (HealthBar) -> Unit,
     onEdit: (HealthBar) -> Unit,
+    onClick: (HealthBar) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    // Calculate the progress
-    val currentDate = LocalDate.now()
-    val endDate = healthBar.startDate.plus(healthBar.duration)
-    val elapsed = ChronoUnit.DAYS.between(healthBar.startDate, currentDate)
-    val duration = ChronoUnit.DAYS.between(healthBar.startDate, endDate)
-    val progress = max(0f, min(1f, elapsed.toFloat() / duration.toFloat()))
-
     // Format the starting date
     val dateFormatter = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)
     val startDateText = healthBar.startDate.format(dateFormatter)
 
     // Format the remaining period
+    val currentDate = LocalDate.now()
+    val endDate = healthBar.startDate.plus(healthBar.duration)
     val remainingPeriod = Period.between(currentDate, endDate)
     val remainingPeriodText = if (remainingPeriod.years > 1) {
         "${remainingPeriod.years} years left"
@@ -369,74 +365,44 @@ fun HealthBarCard(
 
     val haptics = LocalHapticFeedback.current
 
-    SwipeToDismissBox (
-        state = swipeToDismissBoxState,
-        modifier = modifier
-            .fillMaxSize()
-            .padding(8.dp),
-        backgroundContent = {
-            when (swipeToDismissBoxState.dismissDirection) {
-                SwipeToDismissBoxValue.StartToEnd -> Icon(
-                    Icons.Default.Edit,
-                    contentDescription = "Edit",
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(Color.Blue)
-                        .wrapContentSize(Alignment.CenterStart)
-                        .padding(12.dp),
-                    tint = Color.White,
-                )
-                SwipeToDismissBoxValue.EndToStart -> Icon(
-                    Icons.Default.Delete,
-                    contentDescription = "Delete",
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(Color.Red)
-                        .wrapContentSize(Alignment.CenterEnd)
-                        .padding(12.dp),
-                    tint = Color.White,
-                )
-                SwipeToDismissBoxValue.Settled -> {}
-            }
-        }
+    OutlinedCard(
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface,
+        )
     ) {
-        AnimatedVisibility(
-            visible = swipeToDismissBoxState.dismissDirection != SwipeToDismissBoxValue.EndToStart,
-            enter = slideInHorizontally(),
-            exit = slideOutHorizontally(),
-        ) {
-            ListItem(
-                modifier = Modifier.combinedClickable(
-                    onClick = {
-                        println("Clicked ${healthBar.id}")
-                    },
-                    onLongClick = {
-                        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-                        onEdit(healthBar)
-                    },
-                    onLongClickLabel = "Edit",
-                ),
-                headlineContent = { Text(healthBar.name) },
-                supportingContent = {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        LinearProgressIndicator(
-                            progress = { progress },
-                            modifier = Modifier.fillMaxWidth().height(16.dp),
-                        )
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                        ) {
-                            Text(startDateText)
-                            Text(remainingPeriodText)
-                        }
-                    }
+        ListItem(
+            modifier = Modifier.combinedClickable(
+                onClick = {
+                    onClick(healthBar)
                 },
-            )
-        }
+                onLongClick = {
+                    haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                    onEdit(healthBar)
+                },
+                onLongClickLabel = "Edit",
+            ),
+            headlineContent = {
+                Text(
+                    healthBar.name,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+            },
+            supportingContent = {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    HealthBarIndicator(healthBar)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                    ) {
+                        Text(startDateText)
+                        Text(remainingPeriodText)
+                    }
+                }
+            },
+        )
     }
 }
 
