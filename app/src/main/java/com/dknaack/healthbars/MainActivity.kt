@@ -149,6 +149,8 @@ class MainActivity : ComponentActivity() {
                 )
             }
 
+            var selectedHealthBar by remember { mutableStateOf<HealthBar?>(null) }
+
             NavHost(
                 navController = navController,
                 startDestination = "healthBarList",
