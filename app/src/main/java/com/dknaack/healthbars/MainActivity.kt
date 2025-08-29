@@ -236,6 +236,7 @@ fun MainScreen(
                 Icon(Icons.Default.Add, contentDescription = "Add")
             }
         },
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
     ) { innerPadding ->
         LazyColumn(
             verticalArrangement = Arrangement.spacedBy(16.dp),
