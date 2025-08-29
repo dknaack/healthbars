@@ -151,6 +151,16 @@ class MainActivity : ComponentActivity() {
                         )
                     )
                 }
+                composable("viewHealthBar") {
+                    if (selectedHealthBar != null) {
+                        ViewScreen(
+                            navController,
+                            selectedHealthBar!!,
+                        )
+                    } else {
+                        navController.navigate("healthBarList")
+                    }
+                }
             }
         }
     }
@@ -513,6 +523,79 @@ fun CreateHealthBarScreen(
                     }
                 ) {
                     DatePicker(state = datePickerState)
+                }
+            }
+        }
+    }
+}
+
+fun HealthBar.getProgress(): Float {
+    val currentDate = LocalDate.now()
+    val endDate = startDate.plus(duration)
+    val remaining = ChronoUnit.DAYS.between(currentDate, endDate)
+    val duration = ChronoUnit.DAYS.between(startDate, endDate)
+    val progress = max(0f, min(1f, remaining.toFloat() / duration.toFloat()))
+    return progress
+}
+
+/**
+ * Shows data for a health bar.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ViewScreen(
+    navController: NavController,
+    healthBar: HealthBar,
+) {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(healthBar.name) },
+                navigationIcon = {
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
+                    }
+                },
+                actions = {
+                    IconButton(onClick = { println("Edit") }) {
+                        Icon(Icons.Default.Edit, "Edit")
+                    }
+                }
+            )
+        },
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .padding(innerPadding)
+                .padding(16.dp)
+        ) {
+            Card(
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                ),
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Row(verticalAlignment = Alignment.Bottom) {
+                        Text(
+                            text = buildAnnotatedString {
+                                withStyle(SpanStyle(fontSize = 30.sp)) {
+                                    append(round(healthBar.getProgress() * 100f).toInt().toString())
+                                }
+                                withStyle(SpanStyle(fontSize = 14.sp)) {
+                                    append("%")
+                                }
+                            },
+                            color = MaterialTheme.colorScheme.primary,
+                        )
+                    }
+                    HealthBarIndicator(healthBar)
+
+                    val dateFormatter = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)
+                    val endDate = healthBar.startDate.plus(healthBar.duration)
+                    Text("Your ${healthBar.name} dies on ${dateFormatter.format(endDate)}")
                 }
             }
         }
