@@ -183,14 +183,6 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-@Entity(tableName = "health_bars")
-data class HealthBar(
-    @PrimaryKey val id: Long,
-    val name: String,
-    val duration: Period,
-    @ColumnInfo(name = "start_date") val startDate: LocalDate,
-)
-
 class Converters {
     @TypeConverter
     fun localDateFromEpochDays(value: Long?): LocalDate? {
@@ -211,15 +203,6 @@ class Converters {
     fun periodToString(period: Period?): String? {
         return period.toString()
     }
-}
-
-fun HealthBar.getProgress(): Float {
-    val endDate = startDate.plus(duration)
-    val currentDate = LocalDate.now()
-    val elapsed = currentDate.toEpochDay() - startDate.toEpochDay()
-    val total = endDate.toEpochDay() - startDate.toEpochDay()
-    val progress = 1f - elapsed.toFloat() / total
-    return progress
 }
 
 @Dao
