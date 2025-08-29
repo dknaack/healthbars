@@ -406,6 +406,62 @@ fun HealthBarCard(
     }
 }
 
+@Composable
+fun FormField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    imageVector: ImageVector,
+    contentDescription: String,
+    label: String,
+    modifier: Modifier = Modifier,
+    readOnly: Boolean = false,
+    onClick: () -> Unit = { },
+) {
+    // Name
+    Box {
+        Row(
+            modifier = modifier
+                .fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                imageVector = imageVector,
+                contentDescription = contentDescription,
+                modifier = Modifier
+                    .padding(vertical = 16.dp)
+                    .padding(start = 16.dp)
+            )
+            TextField(
+                value = value,
+                onValueChange = onValueChange,
+                label = { Text(label) },
+                readOnly = readOnly,
+                modifier = Modifier.fillMaxWidth(),
+                colors = TextFieldDefaults.colors(
+                    focusedIndicatorColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent,
+                    focusedContainerColor = Color.Transparent,
+                    unfocusedContainerColor = Color.Transparent,
+                )
+            )
+        }
+
+        if (readOnly) {
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = LocalIndication.current,
+                        role = Role.Button,
+                    ) { onClick() }
+            )
+        }
+    }
+
+    HorizontalDivider()
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreateScreen(
@@ -414,9 +470,6 @@ fun CreateScreen(
     modifier: Modifier = Modifier,
 ) {
     var name by remember { mutableStateOf("") }
-    var days by remember { mutableStateOf("0") }
-    var months by remember { mutableStateOf("0") }
-    var years by remember { mutableStateOf("0") }
 
     var showDatePicker by remember { mutableStateOf(false) }
     val datePickerState = rememberDatePickerState()
@@ -427,109 +480,149 @@ fun CreateScreen(
         instant.atZone(zoneId).toLocalDate()
     } ?: LocalDate.now()
 
+    var expanded by remember { mutableStateOf(false) }
+    var periodUnit by remember { mutableStateOf(ChronoUnit.DAYS) }
+    var periodValue by remember { mutableStateOf("") }
+
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Create New Health Bar") }) },
-        floatingActionButton = {
-            FloatingActionButton(onClick = {
-                onCreateHealthBar(HealthBar(
-                    id = System.currentTimeMillis(),
-                    name = name,
-                    duration = Period.of(
-                        years.toInt(),
-                        months.toInt(),
-                        days.toInt()
-                    ),
-                    startDate = startDate)
-                )
-                navController.navigate("healthBarList")
-            }) {
-                Icon(Icons.Default.Check, contentDescription = "Create")
-            }
+        topBar = {
+            TopAppBar(
+                title = { Text("New Health Bar") },
+                navigationIcon = {
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(imageVector = Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "Discard")
+                    }
+                },
+                actions = {
+                    IconButton(onClick = {
+                        println("Creating...")
+                        val endDate = startDate.plus(periodValue.toLong(), periodUnit)
+                        val duration = Period.between(startDate, endDate)
+
+                        onCreateHealthBar(HealthBar(
+                            id = System.currentTimeMillis(),
+                            name = name,
+                            duration = duration,
+                            startDate = startDate,
+                        ))
+
+                        navController.popBackStack()
+                    }) {
+                        Icon(imageVector = Icons.Outlined.Save, contentDescription = "Discard")
+                    }
+                }
+            )
         },
         modifier = modifier,
     ) { innerPadding ->
         Column(
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier
                 .padding(innerPadding)
-                .padding(16.dp),
+                .padding(16.dp)
         ) {
-            // Name Input
-            TextField(
+            Text("Name")
+            OutlinedTextField(
                 value = name,
                 onValueChange = { name = it },
-                label = { Text("Name") },
                 modifier = Modifier.fillMaxWidth(),
             )
 
-            // Start Date Input
-            Box(
+            // Date Field
+            Text("Start Date")
+            OutlinedTextField(
+                value = dateFormatter.format(startDate),
+                onValueChange = { },
                 modifier = Modifier.fillMaxWidth(),
-            ) {
-                TextField(
-                    modifier = Modifier.fillMaxWidth(),
-                    value = dateFormatter.format(startDate),
-                    onValueChange = { },
-                    label = { Text("Starting Date") },
-                    readOnly = true,
-                    trailingIcon = {
-                        IconButton(onClick = { showDatePicker = !showDatePicker }) {
-                            Icon(
-                                imageVector = Icons.Default.DateRange,
-                                contentDescription = "Select date",
-                            )
-                        }
+                readOnly = true,
+                trailingIcon = {
+                    IconButton(onClick = { showDatePicker = !showDatePicker }) {
+                        Icon(imageVector = Icons.Default.CalendarMonth, contentDescription = "Date")
                     }
-                )
-            }
+                },
+            )
 
-            // Period Input
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                TextField(
-                    value = years,
-                    onValueChange = { years = it },
-                    label = { Text("Years") },
-                    modifier = Modifier.weight(1f),
-                )
-                TextField(
-                    value = months,
-                    onValueChange = { months = it },
-                    label = { Text("Months") },
-                    modifier = Modifier.weight(1f),
-                )
-                TextField(
-                    value = days,
-                    onValueChange = { days = it },
-                    label = { Text("Days") },
-                    modifier = Modifier.weight(1f),
-                )
-            }
+            // Period Field
+            Text("Duration")
 
-            if (showDatePicker) {
-                DatePickerDialog(
-                    onDismissRequest = { },
-                    confirmButton = {
-                        TextButton(onClick = {
-                            println("Confirmed!")
-                            showDatePicker = false
-                        }) {
-                            Text("OK")
-                        }
-                    },
-                    dismissButton = {
-                        TextButton(onClick = {
-                            println("dismissed")
-                            showDatePicker = false
-                        }) {
-                            Text("Cancel")
-                        }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(
+                    value = periodValue,
+                    onValueChange = { periodValue = it },
+                    modifier = Modifier.fillMaxWidth(.5f),
+                )
+
+                Box(modifier = Modifier.height(IntrinsicSize.Min)) {
+                    OutlinedTextField(
+                        value = periodUnit.toString(),
+                        modifier = Modifier.fillMaxWidth(),
+                        trailingIcon = {
+                            val icon = if (expanded) Icons.Filled.ArrowDropUp else Icons.Filled.ArrowDropDown
+                            Icon(icon, "")
+                        },
+                        onValueChange = { },
+                        readOnly = true,
+                    )
+
+                    // Transparent clickable surface on top of OutlinedTextField
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(top = 8.dp)
+                            .clip(MaterialTheme.shapes.extraSmall)
+                            .clickable { expanded = true },
+                        color = Color.Transparent,
+                    ) {}
+
+                    fun selectUnit(unit: ChronoUnit) {
+                        periodUnit = unit
+                        expanded = false
                     }
-                ) {
-                    DatePicker(state = datePickerState)
+
+                    DropdownMenu(
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false },
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text("Days") },
+                            onClick = { selectUnit(ChronoUnit.DAYS) },
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Weeks") },
+                            onClick = { selectUnit(ChronoUnit.WEEKS) },
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Months") },
+                            onClick = { selectUnit(ChronoUnit.MONTHS) },
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Years") },
+                            onClick = { selectUnit(ChronoUnit.YEARS) },
+                        )
+                    }
                 }
+            }
+        }
+
+        if (showDatePicker) {
+            DatePickerDialog(
+                onDismissRequest = { },
+                confirmButton = {
+                    TextButton(onClick = {
+                        showDatePicker = false
+                    }) {
+                        Text("OK")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = {
+                        showDatePicker = false
+                    }) {
+                        Text("Cancel")
+                    }
+                }
+            ) {
+                DatePicker(state = datePickerState)
             }
         }
     }
