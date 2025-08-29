@@ -64,10 +64,12 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
@@ -88,13 +90,31 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.room.ColumnInfo
+import androidx.room.Dao
+import androidx.room.Database
+import androidx.room.Delete
+import androidx.room.Entity
+import androidx.room.Insert
+import androidx.room.PrimaryKey
+import androidx.room.Query
+import androidx.room.Room
+import androidx.room.RoomDatabase
+import androidx.room.TypeConverter
+import androidx.room.TypeConverters
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.launch
+import kotlinx.serialization.Serializable
+import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
 import java.time.Period
 import java.time.ZoneId
+import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import java.time.temporal.ChronoUnit
+import java.util.Date
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.round
@@ -103,51 +123,20 @@ class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        println("Testing testing 123")
+
+        val db = Room.databaseBuilder(
+            applicationContext,
+            AppDatabase::class.java,
+            "app-database"
+        ).build()
+
+        val healthBarDao = db.healthBarDao()
 
         setContent {
             val navController = rememberNavController()
-
-            val healthBars: SnapshotStateList<HealthBar> = remember {
-                mutableStateListOf(
-                    HealthBar(
-                        id = 1,
-                        name = "Foo",
-                        duration = Period.ofDays(10),
-                        startDate = LocalDate.now().minusDays(1),
-                    ),
-                    HealthBar(
-                        id = 2,
-                        name = "Bar",
-                        duration = Period.ofDays(8),
-                        startDate = LocalDate.now().minusDays(2),
-                    ),
-                    HealthBar(
-                        id = 3,
-                        name = "Baz",
-                        duration = Period.ofDays(5),
-                        startDate = LocalDate.now().minusDays(3),
-                    ),
-                    HealthBar(
-                        id = 4,
-                        name = "Example",
-                        duration = Period.ofDays(10),
-                        startDate = LocalDate.now().minusDays(4),
-                    ),
-                    HealthBar(
-                        id = 5,
-                        name = "Example",
-                        duration = Period.ofDays(10),
-                        startDate = LocalDate.now().minusDays(4),
-                    ),
-                    HealthBar(
-                        id = 6,
-                        name = "Example",
-                        duration = Period.ofDays(10),
-                        startDate = LocalDate.now().minusDays(4),
-                    ),
-                )
-            }
+            val healthBarsFlow = remember { healthBarDao.getAll() }
+            val healthBars = healthBarsFlow.collectAsState(initial = emptyList())
+            val scope = rememberCoroutineScope()
 
             var selectedHealthBar by remember { mutableStateOf<HealthBar?>(null) }
 
@@ -157,17 +146,22 @@ class MainActivity : ComponentActivity() {
             ) {
                 composable("healthBarList") {
                     MainScreen(
-                        healthBars = healthBars,
+                        healthBars = healthBars.value,
                         onViewHealthBar = {
                             selectedHealthBar = it
                             navController.navigate("viewHealthBar")
+                        },
+                        onDeleteHealthBar = {
+                            scope.launch { healthBarDao.delete(it) }
                         },
                         navController)
                 }
                 composable("createHealthBar") {
                     CreateScreen(
                         navController,
-                        onCreateHealthBar = { healthBars += it },
+                        onCreateHealthBar = {
+                            scope.launch { healthBarDao.insert(it) }
+                        },
                         modifier = Modifier.animateEnterExit(
                             enter = slideInVertically(),
                             exit = slideOutVertically(),
@@ -187,6 +181,63 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+}
+
+@Entity(tableName = "health_bars")
+data class HealthBar(
+    @PrimaryKey val id: Long,
+    val name: String,
+    val duration: Period,
+    @ColumnInfo(name = "start_date") val startDate: LocalDate,
+)
+
+class Converters {
+    @TypeConverter
+    fun localDateFromEpochDays(value: Long?): LocalDate? {
+        return value?.let { LocalDate.ofEpochDay(it) }
+    }
+
+    @TypeConverter
+    fun localDateToEpochDays(date: LocalDate?): Long? {
+        return date?.toEpochDay()
+    }
+
+    @TypeConverter
+    fun periodFromString(value: String?): Period? {
+        return Period.parse(value)
+    }
+
+    @TypeConverter
+    fun periodToString(period: Period?): String? {
+        return period.toString()
+    }
+}
+
+fun HealthBar.getProgress(): Float {
+    val endDate = startDate.plus(duration)
+    val currentDate = LocalDate.now()
+    val elapsed = currentDate.toEpochDay() - startDate.toEpochDay()
+    val total = endDate.toEpochDay() - startDate.toEpochDay()
+    val progress = 1f - elapsed.toFloat() / total
+    return progress
+}
+
+@Dao
+interface HealthBarDao {
+    @Insert
+    suspend fun insert(healthBar: HealthBar)
+
+    @Delete
+    suspend fun delete(healthBar: HealthBar)
+
+    @Query("SELECT * FROM health_bars")
+    fun getAll(): Flow<List<HealthBar>>
+}
+
+@Database(entities = [HealthBar::class], version = 1)
+@TypeConverters(Converters::class)
+abstract class AppDatabase : RoomDatabase() {
+    abstract fun healthBarDao(): HealthBarDao
 }
 
 /**
@@ -217,8 +268,9 @@ fun BottomSheetButton(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
-    healthBars: SnapshotStateList<HealthBar>,
+    healthBars: List<HealthBar>,
     onViewHealthBar: (HealthBar) -> Unit,
+    onDeleteHealthBar: (HealthBar) -> Unit,
     navController: NavController,
 ) {
     var contextHealthBarId by rememberSaveable { mutableStateOf<Long?>(null) }
@@ -255,7 +307,7 @@ fun MainScreen(
             ) { healthBar ->
                 HealthBarCard(
                     healthBar = healthBar,
-                    onRemove = { healthBars -= healthBar },
+                    onDelete = onDeleteHealthBar,
                     onEdit = { contextHealthBarId = healthBar.id },
                     onClick = onViewHealthBar,
                     modifier = Modifier.animateItem(),
@@ -298,13 +350,6 @@ fun MainScreen(
     }
 }
 
-data class HealthBar(
-    val id: Long,
-    val name: String,
-    val duration: Period,
-    val startDate: LocalDate,
-)
-
 @Composable
 fun HealthBarIndicator(healthBar: HealthBar) {
     LinearProgressIndicator(
@@ -318,34 +363,37 @@ fun HealthBarIndicator(healthBar: HealthBar) {
 @Composable
 fun HealthBarCard(
     healthBar: HealthBar,
-    onRemove: (HealthBar) -> Unit,
+    onDelete: (HealthBar) -> Unit,
     onEdit: (HealthBar) -> Unit,
     onClick: (HealthBar) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     // Format the starting date
     val dateFormatter = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)
-    val startDateText = healthBar.startDate.format(dateFormatter)
+    val startDateText = dateFormatter.format(healthBar.startDate)
 
     // Format the remaining period
     val currentDate = LocalDate.now()
     val endDate = healthBar.startDate.plus(healthBar.duration)
     val remainingPeriod = Period.between(currentDate, endDate)
-    val remainingPeriodText = if (remainingPeriod.years > 1) {
-        "${remainingPeriod.years} years left"
-    } else if (remainingPeriod.years == 1) {
+    val years = remainingPeriod.years
+    val months = remainingPeriod.months
+    val days = remainingPeriod.days
+    val remainingPeriodText = if (years > 1) {
+        "$years years left"
+    } else if (years > 0) {
         "1 year left"
-    } else if (remainingPeriod.months > 1) {
-        "${remainingPeriod.months} months left"
-    } else if (remainingPeriod.months == 1) {
+    } else if (months > 1) {
+        "$months months left"
+    } else if (months > 0) {
         "1 month left"
-    } else if (remainingPeriod.days >= 14) {
-        "${remainingPeriod.days / 7} weeks left"
-    } else if (remainingPeriod.days >= 7) {
+    } else if (days >= 14) {
+        "${days/7} weeks left"
+    } else if (days >= 7) {
         "1 week left"
-    } else if (remainingPeriod.days > 1) {
-        "${remainingPeriod.days} days left"
-    } else if (remainingPeriod.days == 1) {
+    } else if (days > 1) {
+        "$days days left"
+    } else if (days > 0) {
         "1 day left"
     } else {
         ""
@@ -356,7 +404,7 @@ fun HealthBarCard(
             if (it == SwipeToDismissBoxValue.StartToEnd) {
                 println("Edit")
             } else if (it == SwipeToDismissBoxValue.EndToStart) {
-                onRemove(healthBar)
+                onDelete(healthBar)
             }
 
             it != SwipeToDismissBoxValue.StartToEnd
@@ -495,15 +543,13 @@ fun CreateScreen(
                 },
                 actions = {
                     IconButton(onClick = {
-                        println("Creating...")
                         val endDate = startDate.plus(periodValue.toLong(), periodUnit)
-                        val duration = Period.between(startDate, endDate)
 
                         onCreateHealthBar(HealthBar(
                             id = System.currentTimeMillis(),
                             name = name,
-                            duration = duration,
                             startDate = startDate,
+                            duration = Period.between(startDate, endDate)
                         ))
 
                         navController.popBackStack()
@@ -626,15 +672,6 @@ fun CreateScreen(
             }
         }
     }
-}
-
-fun HealthBar.getProgress(): Float {
-    val currentDate = LocalDate.now()
-    val endDate = startDate.plus(duration)
-    val remaining = ChronoUnit.DAYS.between(currentDate, endDate)
-    val duration = ChronoUnit.DAYS.between(startDate, endDate)
-    val progress = max(0f, min(1f, remaining.toFloat() / duration.toFloat()))
-    return progress
 }
 
 /**
