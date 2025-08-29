@@ -218,6 +218,7 @@ fun BottomSheetButton(
 @Composable
 fun MainScreen(
     healthBars: SnapshotStateList<HealthBar>,
+    onViewHealthBar: (HealthBar) -> Unit,
     navController: NavController,
 ) {
     var contextHealthBarId by rememberSaveable { mutableStateOf<Long?>(null) }
@@ -250,6 +251,7 @@ fun MainScreen(
                     healthBar = healthBar,
                     onRemove = { healthBars -= healthBar },
                     onEdit = { contextHealthBarId = healthBar.id },
+                    onClick = onViewHealthBar,
                     modifier = Modifier.animateItem(),
                 )
             }
