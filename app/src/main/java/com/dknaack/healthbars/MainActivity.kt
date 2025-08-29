@@ -182,7 +182,7 @@ fun HealthBarListScreen(
         LazyColumn(Modifier.padding(innerPadding)) {
             items(
                 items = healthBars,
-                key = { it.name },
+                key = { it.id },
             ) { healthBar ->
                 HealthBarCard(
                     healthBar = healthBar,
