@@ -179,7 +179,12 @@ fun HealthBarListScreen(
             }
         },
     ) { innerPadding ->
-        LazyColumn(Modifier.padding(innerPadding)) {
+        LazyColumn(
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            modifier = Modifier
+                .padding(innerPadding),
+            contentPadding = PaddingValues(16.dp),
+        ) {
             items(
                 items = healthBars,
                 key = { it.id },
