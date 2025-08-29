@@ -225,9 +225,14 @@ fun MainScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(title = {
-                Text("Health Bars")
-            })
+            TopAppBar(
+                title = { Text("Health Bars") },
+                actions = {
+                    IconButton(onClick = { println("Settings") }) {
+                        Icon(imageVector = Icons.Outlined.Settings, contentDescription = "Settings")
+                    }
+                }
+            )
         },
         floatingActionButton = {
             FloatingActionButton(onClick = {
