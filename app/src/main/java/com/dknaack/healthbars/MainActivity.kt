@@ -281,6 +281,10 @@ fun HealthBarCard(
         "${remainingPeriod.months} months left"
     } else if (remainingPeriod.months == 1) {
         "1 month left"
+    } else if (remainingPeriod.days >= 14) {
+        "${remainingPeriod.days / 7} weeks left"
+    } else if (remainingPeriod.days >= 7) {
+        "1 week left"
     } else if (remainingPeriod.days > 1) {
         "${remainingPeriod.days} days left"
     } else if (remainingPeriod.days == 1) {
