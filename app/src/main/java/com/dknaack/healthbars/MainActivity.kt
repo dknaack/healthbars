@@ -113,6 +113,18 @@ class MainActivity : ComponentActivity() {
                         duration = Period.ofDays(10),
                         startDate = LocalDate.now().minusDays(4),
                     ),
+                    HealthBar(
+                        id = 5,
+                        name = "Example",
+                        duration = Period.ofDays(10),
+                        startDate = LocalDate.now().minusDays(4),
+                    ),
+                    HealthBar(
+                        id = 6,
+                        name = "Example",
+                        duration = Period.ofDays(10),
+                        startDate = LocalDate.now().minusDays(4),
+                    ),
                 )
             }
 
@@ -195,6 +207,10 @@ fun HealthBarListScreen(
                     onEdit = { contextHealthBarId = healthBar.id },
                     modifier = Modifier.animateItem(),
                 )
+            }
+
+            item {
+                Spacer(Modifier.height(64.dp))
             }
         }
 
