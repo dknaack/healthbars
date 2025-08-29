@@ -133,7 +133,13 @@ class MainActivity : ComponentActivity() {
                 startDestination = "healthBarList",
             ) {
                 composable("healthBarList") {
-                    HealthBarListScreen(healthBars, navController)
+                    MainScreen(
+                        healthBars = healthBars,
+                        onViewHealthBar = {
+                            selectedHealthBar = it
+                            navController.navigate("viewHealthBar")
+                        },
+                        navController)
                 }
                 composable("createHealthBar") {
                     CreateHealthBarScreen(
@@ -177,7 +183,7 @@ fun BottomSheetButton(
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HealthBarListScreen(
+fun MainScreen(
     healthBars: SnapshotStateList<HealthBar>,
     navController: NavController,
 ) {
