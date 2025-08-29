@@ -163,7 +163,7 @@ class MainActivity : ComponentActivity() {
                         navController)
                 }
                 composable("createHealthBar") {
-                    CreateHealthBarScreen(
+                    CreateScreen(
                         navController,
                         onCreateHealthBar = { healthBars += it },
                         modifier = Modifier.animateEnterExit(
@@ -423,7 +423,7 @@ fun HealthBarCard(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CreateHealthBarScreen(
+fun CreateScreen(
     navController: NavController,
     onCreateHealthBar: (HealthBar) -> Unit,
     modifier: Modifier = Modifier,
