@@ -150,6 +150,9 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+/**
+ * A button with an icon and a label with the correct background suitable for a bottom sheet.
+ */
 @Composable
 fun BottomSheetButton(
     imageVector: ImageVector,
@@ -169,6 +172,9 @@ fun BottomSheetButton(
     )
 }
 
+/**
+ * Shows all created health bars.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HealthBarListScreen(
