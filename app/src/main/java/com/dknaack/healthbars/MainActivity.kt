@@ -19,6 +19,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
 import androidx.room.Dao
 import androidx.room.Database
 import androidx.room.Delete
@@ -59,64 +60,72 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val db = Room.databaseBuilder(
-            applicationContext,
-            AppDatabase::class.java,
-            "app-database"
-        ).build()
-
         val healthBarDao = db.healthBarDao()
 
         setContent {
-            val navController = rememberNavController()
-            val healthBarsFlow = remember { healthBarDao.getAll() }
-            val healthBars = healthBarsFlow.collectAsState(initial = emptyList())
-            val scope = rememberCoroutineScope()
+            HealthBarsTheme {
+                val navController = rememberNavController()
+                val healthBarsFlow = remember { healthBarDao.getAll() }
+                val healthBars = healthBarsFlow.collectAsState(initial = emptyList())
+                val scope = rememberCoroutineScope()
 
-            var selectedHealthBar by remember { mutableStateOf<HealthBar?>(null) }
+                var selectedHealthBar by remember { mutableStateOf<HealthBar?>(null) }
 
-            NavHost(
-                navController = navController,
-                startDestination = "healthBarList",
-            ) {
-                composable("healthBarList") {
-                    ListScreen(
-                        navController = navController,
-                        healthBars = healthBars.value,
-                        onClick = {
-                            selectedHealthBar = it
-                            navController.navigate("viewHealthBar")
-                        },
-                        onDelete = {
-                            scope.launch { healthBarDao.delete(it) }
-                        },
-                    )
-                }
-                composable("createHealthBar") {
-                    UpsertScreen(
-                        navController,
-                        onUpsert = {
-                            scope.launch { healthBarDao.insert(it) }
-                        },
-                        modifier = Modifier.animateEnterExit(
-                            enter = slideInVertically(),
-                            exit = slideOutVertically(),
+                NavHost(
+                    navController = navController,
+                    startDestination = NavItem.ListScreen,
+                ) {
+                    composable<NavItem.ListScreen> {
+                        ListScreen(
+                            navController = navController,
+                            healthBars = healthBars.value,
+                            onClick = {
+                                selectedHealthBar = it
+                                navController.navigate(NavItem.ViewScreen(it.id))
+                            },
+                            onDelete = {
+                                scope.launch { healthBarDao.delete(it) }
+                            },
                         )
-                    )
-                }
-                composable("viewHealthBar") {
-                    if (selectedHealthBar != null) {
-                        ViewScreen(
+                    }
+                    composable<NavItem.UpsertScreen> {
+                        val args: NavItem.UpsertScreen = it.toRoute()
+                        UpsertScreen(
                             navController,
-                            selectedHealthBar!!,
+                            onUpsert = { healthBar ->
+                                scope.launch { healthBarDao.upsert(healthBar) }
+                            },
+                            modifier = Modifier.animateEnterExit(
+                                enter = slideInVertically(),
+                                exit = slideOutVertically(),
+                            )
                         )
-                    } else {
-                        navController.navigate("healthBarList")
+                    }
+                    composable<NavItem.ViewScreen> {
+                        val args: NavItem.ViewScreen = it.toRoute()
+                        if (selectedHealthBar != null) {
+                            ViewScreen(
+                                navController,
+                                selectedHealthBar!!,
+                            )
+                        } else {
+                            navController.popBackStack()
+                        }
                     }
                 }
             }
         }
     }
+}
+
+@Serializable
+sealed class NavItem {
+    @Serializable
+    object ListScreen : NavItem()
+    @Serializable
+    data class ViewScreen(val id: Long) : NavItem()
+    @Serializable
+    data class UpsertScreen(val id: Long? = null) : NavItem()
 }
 
 class Converters {
