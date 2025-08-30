@@ -1,4 +1,4 @@
-package com.dknaack.healthbars
+package com.dknaack.healthbars.ui.screens.list
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
@@ -14,11 +14,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -46,6 +48,7 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.dknaack.healthbars.NavItem
 import com.dknaack.healthbars.components.HealthBarIndicator
 import com.dknaack.healthbars.data.HealthBar
 import java.time.LocalDate
@@ -68,7 +71,20 @@ fun ListScreen(
     var contextHealthBarId by rememberSaveable { mutableStateOf<Long?>(null) }
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Health Bars") }) },
+        topBar = { TopAppBar(
+            title = { Text("Health Bars") },
+            actions = {
+                IconButton(onClick = { }) {
+                    Icon(imageVector = Icons.Default.Search, contentDescription = "Search")
+                }
+                IconButton(onClick = { }) {
+                    Icon(imageVector = Icons.AutoMirrored.Filled.Sort, contentDescription = "Sort")
+                }
+                IconButton(onClick = { }) {
+                    Icon(imageVector = Icons.Default.MoreVert, contentDescription = "More")
+                }
+            }
+        ) },
         floatingActionButton = {
             FloatingActionButton(onClick = {
                 navController.navigate(NavItem.UpsertScreen())

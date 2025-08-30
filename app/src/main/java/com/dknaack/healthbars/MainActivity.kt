@@ -23,6 +23,10 @@ import androidx.navigation.toRoute
 import androidx.room.Room
 import com.dknaack.healthbars.data.AppDatabase
 import com.dknaack.healthbars.data.HealthBar
+import com.dknaack.healthbars.ui.screens.list.ListScreen
+import com.dknaack.healthbars.ui.screens.list.ListViewModel
+import com.dknaack.healthbars.ui.screens.overview.ViewScreen
+import com.dknaack.healthbars.ui.screens.upsert.UpsertScreen
 import com.dknaack.healthbars.ui.theme.HealthBarsTheme
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
@@ -36,11 +40,11 @@ class MainActivity : ComponentActivity() {
         ).build()
     }
 
-    private val viewModel by viewModels<EventViewModel>(
+    private val viewModel by viewModels<ListViewModel>(
         factoryProducer = {
             object : ViewModelProvider.Factory {
                 override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                    return EventViewModel(db.healthBarDao()) as T
+                    return ListViewModel(db.healthBarDao()) as T
                 }
             }
         }
@@ -55,7 +59,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             HealthBarsTheme {
                 val navController = rememberNavController()
-                val healthBarsFlow = remember { healthBarDao.getAll() }
+                val healthBarsFlow = remember { healthBarDao.getAllOrderedByEndDate() }
                 val healthBars = healthBarsFlow.collectAsState(initial = emptyList())
                 val scope = rememberCoroutineScope()
 

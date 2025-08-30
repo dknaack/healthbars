@@ -1,4 +1,4 @@
-package com.dknaack.healthbars
+package com.dknaack.healthbars.ui.screens.overview
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column

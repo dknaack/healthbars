@@ -1,4 +1,4 @@
-package com.dknaack.healthbars
+package com.dknaack.healthbars.ui.screens.upsert
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -44,7 +44,6 @@ import androidx.navigation.NavController
 import com.dknaack.healthbars.data.HealthBar
 import java.time.Instant
 import java.time.LocalDate
-import java.time.Period
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
