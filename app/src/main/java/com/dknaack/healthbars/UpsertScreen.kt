@@ -57,12 +57,12 @@ fun UpsertScreen(
     modifier: Modifier = Modifier,
     healthBar: HealthBar? = null,
 ) {
-    var name by remember { mutableStateOf("") }
+    var name by remember { mutableStateOf(healthBar?.name ?: "") }
 
     var showDatePicker by remember { mutableStateOf(false) }
     val datePickerState = rememberDatePickerState()
     val dateFormatter = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)
-    val startDate = datePickerState.selectedDateMillis?.let {
+    val startDate = healthBar?.startDate ?: datePickerState.selectedDateMillis?.let {
         val instant = Instant.ofEpochMilli(it)
         val zoneId = ZoneId.systemDefault()
         instant.atZone(zoneId).toLocalDate()
@@ -75,7 +75,7 @@ fun UpsertScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("New Health Bar") },
+                title = { Text(if (healthBar != null) "Edit" else "New") },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(imageVector = Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "Discard")
@@ -86,7 +86,7 @@ fun UpsertScreen(
                         val endDate = startDate.plus(periodValue.toLong(), periodUnit)
 
                         onUpsert(HealthBar(
-                            id = System.currentTimeMillis(),
+                            id = healthBar?.id ?: System.currentTimeMillis(),
                             name = name,
                             startDate = startDate,
                             duration = Period.between(startDate, endDate)
