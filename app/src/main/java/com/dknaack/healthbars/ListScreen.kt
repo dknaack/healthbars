@@ -67,16 +67,7 @@ fun ListScreen(
     var contextHealthBarId by rememberSaveable { mutableStateOf<Long?>(null) }
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Health Bars") },
-                actions = {
-                    IconButton(onClick = { println("Settings") }) {
-                        Icon(imageVector = Icons.Outlined.Settings, contentDescription = "Settings")
-                    }
-                }
-            )
-        },
+        topBar = { TopAppBar(title = { Text("Health Bars") }) },
         floatingActionButton = {
             FloatingActionButton(onClick = {
                 navController.navigate("createHealthBar")
