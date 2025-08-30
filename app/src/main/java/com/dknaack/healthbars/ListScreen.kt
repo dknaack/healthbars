@@ -46,6 +46,7 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.dknaack.healthbars.components.HealthBarIndicator
 import java.time.LocalDate
 import java.time.Period
 import java.time.format.DateTimeFormatter
