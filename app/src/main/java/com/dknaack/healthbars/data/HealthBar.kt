@@ -12,11 +12,13 @@ import kotlin.math.min
 data class HealthBar(
     @PrimaryKey val id: Long,
     val name: String,
-    @ColumnInfo(name = "end_date") val duration: Period,
     @ColumnInfo(name = "start_date") val startDate: LocalDate,
+    @ColumnInfo(name = "end_date") val endDate: LocalDate,
 ) {
+    val duration: Period
+        get() = Period.between(startDate, endDate)
+
     fun getProgress(): Float {
-        val endDate = startDate.plus(duration)
         val currentDate = LocalDate.now()
         val elapsed = currentDate.toEpochDay() - startDate.toEpochDay()
         val total = endDate.toEpochDay() - startDate.toEpochDay()

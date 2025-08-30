@@ -86,12 +86,14 @@ fun UpsertScreen(
                     IconButton(onClick = {
                         val endDate = startDate.plus(periodValue.toLong(), periodUnit)
 
-                        onUpsert(HealthBar(
-                            id = healthBar?.id ?: System.currentTimeMillis(),
-                            name = name,
-                            startDate = startDate,
-                            duration = Period.between(startDate, endDate)
-                        ))
+                        onUpsert(
+                            HealthBar(
+                                id = healthBar?.id ?: System.currentTimeMillis(),
+                                name = name,
+                                startDate = startDate,
+                                endDate = endDate,
+                            )
+                        )
 
                         navController.popBackStack()
                     }) {
