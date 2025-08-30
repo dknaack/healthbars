@@ -1,4 +1,4 @@
-package com.dknaack.healthbars
+package com.dknaack.healthbars.data
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity

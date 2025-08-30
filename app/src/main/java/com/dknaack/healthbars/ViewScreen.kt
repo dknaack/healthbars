@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.dknaack.healthbars.components.HealthBarIndicator
+import com.dknaack.healthbars.data.HealthBar
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import kotlin.math.round

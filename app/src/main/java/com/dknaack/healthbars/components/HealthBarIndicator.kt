@@ -6,7 +6,7 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.dknaack.healthbars.HealthBar
+import com.dknaack.healthbars.data.HealthBar
 
 @Composable
 fun HealthBarIndicator(healthBar: HealthBar) {

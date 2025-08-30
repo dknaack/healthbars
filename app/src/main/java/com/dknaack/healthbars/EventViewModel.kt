@@ -2,6 +2,7 @@ package com.dknaack.healthbars
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.dknaack.healthbars.data.HealthBarDao
 import kotlinx.coroutines.launch
 
 class EventViewModel(

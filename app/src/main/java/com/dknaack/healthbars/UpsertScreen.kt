@@ -41,6 +41,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.dknaack.healthbars.data.HealthBar
 import java.time.Instant
 import java.time.LocalDate
 import java.time.Period
