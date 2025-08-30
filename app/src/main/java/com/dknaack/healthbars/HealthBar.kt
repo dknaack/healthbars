@@ -5,6 +5,8 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 import java.time.LocalDate
 import java.time.Period
+import kotlin.math.max
+import kotlin.math.min
 
 @Entity(tableName = "health_bars")
 data class HealthBar(
@@ -19,6 +21,6 @@ data class HealthBar(
         val elapsed = currentDate.toEpochDay() - startDate.toEpochDay()
         val total = endDate.toEpochDay() - startDate.toEpochDay()
         val progress = 1f - elapsed.toFloat() / total
-        return progress
+        return max(0f, min(1f, progress))
     }
 }
