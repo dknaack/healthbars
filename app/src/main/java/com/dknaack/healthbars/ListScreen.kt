@@ -70,7 +70,7 @@ fun ListScreen(
         topBar = { TopAppBar(title = { Text("Health Bars") }) },
         floatingActionButton = {
             FloatingActionButton(onClick = {
-                navController.navigate("createHealthBar")
+                navController.navigate(NavItem.UpsertScreen())
             }) {
                 Icon(Icons.Default.Add, contentDescription = "Add")
             }
