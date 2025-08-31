@@ -7,4 +7,5 @@ sealed interface ListEvent {
     data class ViewHealthBar(val id: Long): ListEvent
     data class DeleteHealthBar(val id: Long): ListEvent
     data class UpsertHealthBar(val healthBar: HealthBar): ListEvent
+    data class ChangeOrder(val order: SortType): ListEvent
 }

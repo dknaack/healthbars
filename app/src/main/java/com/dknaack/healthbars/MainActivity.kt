@@ -11,7 +11,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.ViewModel
@@ -19,7 +18,6 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.toRoute
 import androidx.room.Room
 import com.dknaack.healthbars.data.AppDatabase
 import com.dknaack.healthbars.data.HealthBar
@@ -28,7 +26,6 @@ import com.dknaack.healthbars.ui.screens.list.ListViewModel
 import com.dknaack.healthbars.ui.screens.overview.ViewScreen
 import com.dknaack.healthbars.ui.screens.upsert.UpsertScreen
 import com.dknaack.healthbars.ui.theme.HealthBarsTheme
-import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 
 class MainActivity : ComponentActivity() {
@@ -54,15 +51,9 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val healthBarDao = db.healthBarDao()
-
         setContent {
             HealthBarsTheme {
                 val navController = rememberNavController()
-                val healthBarsFlow = remember { healthBarDao.getAllOrderedByEndDate() }
-                val healthBars = healthBarsFlow.collectAsState(initial = emptyList())
-                val scope = rememberCoroutineScope()
-
                 var selectedHealthBar by remember { mutableStateOf<HealthBar?>(null) }
 
                 NavHost(
@@ -70,25 +61,16 @@ class MainActivity : ComponentActivity() {
                     startDestination = NavItem.ListScreen,
                 ) {
                     composable<NavItem.ListScreen> {
+                        val state by viewModel.state.collectAsState()
                         ListScreen(
-                            navController = navController,
-                            healthBars = healthBars.value,
-                            onClick = {
-                                selectedHealthBar = it
-                                navController.navigate(NavItem.ViewScreen(it.id))
-                            },
-                            onDelete = {
-                                scope.launch { healthBarDao.delete(it) }
-                            },
+                            state = state,
+                            onEvent = viewModel::onEvent,
                         )
                     }
                     composable<NavItem.UpsertScreen> {
-                        val args: NavItem.UpsertScreen = it.toRoute()
                         UpsertScreen(
                             navController,
-                            onUpsert = { healthBar ->
-                                scope.launch { healthBarDao.upsert(healthBar) }
-                            },
+                            onUpsert = { },
                             modifier = Modifier.animateEnterExit(
                                 enter = slideInVertically(),
                                 exit = slideOutVertically(),
@@ -96,7 +78,6 @@ class MainActivity : ComponentActivity() {
                         )
                     }
                     composable<NavItem.ViewScreen> {
-                        val args: NavItem.ViewScreen = it.toRoute()
                         if (selectedHealthBar != null) {
                             ViewScreen(
                                 navController,
