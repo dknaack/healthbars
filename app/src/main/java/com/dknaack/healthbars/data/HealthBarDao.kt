@@ -17,6 +17,9 @@ interface HealthBarDao {
     @Query("SELECT * FROM health_bars WHERE id = :id")
     suspend fun get(id: Long): HealthBar?
 
-    @Query("SELECT * FROM health_bars")
+    @Query("SELECT * FROM health_bars ORDER BY name")
     fun getAll(): Flow<List<HealthBar>>
+
+    @Query("SELECT * FROM health_bars ORDER BY end_date ASC")
+    fun getAllOrderedByEndDate(): Flow<List<HealthBar>>
 }
