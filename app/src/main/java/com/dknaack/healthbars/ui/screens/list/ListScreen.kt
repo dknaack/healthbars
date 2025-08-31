@@ -18,6 +18,8 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -29,6 +31,10 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
@@ -51,6 +57,8 @@ fun ListScreen(
     navController: NavController,
     modifier: Modifier = Modifier,
 ) {
+    var isSortMenuExpanded by remember { mutableStateOf(false) }
+
     Scaffold(
         topBar = { TopAppBar(
             title = { Text("Health Bars") },
@@ -58,8 +66,28 @@ fun ListScreen(
                 IconButton(onClick = { }) {
                     Icon(imageVector = Icons.Default.Search, contentDescription = "Search")
                 }
-                IconButton(onClick = { }) {
+                IconButton(onClick = { isSortMenuExpanded = true }) {
                     Icon(imageVector = Icons.AutoMirrored.Filled.Sort, contentDescription = "Sort")
+
+                    DropdownMenu(
+                        expanded = isSortMenuExpanded,
+                        onDismissRequest = { isSortMenuExpanded = false },
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text("Name") },
+                            onClick = {
+                                onEvent(ListEvent.Sort(SortType.NAME))
+                                isSortMenuExpanded = false
+                            },
+                        )
+                        DropdownMenuItem(
+                            text = { Text("End Date") },
+                            onClick = {
+                                onEvent(ListEvent.Sort(SortType.END_DATE))
+                                isSortMenuExpanded = false
+                            },
+                        )
+                    }
                 }
                 IconButton(onClick = { }) {
                     Icon(imageVector = Icons.Default.MoreVert, contentDescription = "More")
@@ -82,10 +110,7 @@ fun ListScreen(
                 .padding(innerPadding),
             contentPadding = PaddingValues(16.dp),
         ) {
-            items(
-                items = state.healthBars,
-                key = { it.id },
-            ) { healthBar ->
+            items(state.healthBars) { healthBar ->
                 HealthBarCard(
                     healthBar = healthBar,
                     onClick = {

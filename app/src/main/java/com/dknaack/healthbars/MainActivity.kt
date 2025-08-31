@@ -11,6 +11,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.ViewModel
@@ -26,6 +27,7 @@ import com.dknaack.healthbars.ui.screens.list.ListViewModel
 import com.dknaack.healthbars.ui.screens.overview.ViewScreen
 import com.dknaack.healthbars.ui.screens.upsert.UpsertScreen
 import com.dknaack.healthbars.ui.theme.HealthBarsTheme
+import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 
 class MainActivity : ComponentActivity() {
@@ -53,7 +55,9 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             HealthBarsTheme {
+                val scope = rememberCoroutineScope()
                 val navController = rememberNavController()
+                val state by viewModel.state.collectAsState()
                 var selectedHealthBar by remember { mutableStateOf<HealthBar?>(null) }
 
                 NavHost(
@@ -61,7 +65,6 @@ class MainActivity : ComponentActivity() {
                     startDestination = NavItem.ListScreen,
                 ) {
                     composable<NavItem.ListScreen> {
-                        val state by viewModel.state.collectAsState()
                         ListScreen(
                             state = state,
                             onEvent = viewModel::onEvent,
@@ -71,7 +74,12 @@ class MainActivity : ComponentActivity() {
                     composable<NavItem.UpsertScreen> {
                         UpsertScreen(
                             navController,
-                            onUpsert = { },
+                            onUpsert = {
+                                scope.launch {
+                                    val dao = db.healthBarDao()
+                                    dao.upsert(it)
+                                }
+                            },
                             modifier = Modifier.animateEnterExit(
                                 enter = slideInVertically(),
                                 exit = slideOutVertically(),

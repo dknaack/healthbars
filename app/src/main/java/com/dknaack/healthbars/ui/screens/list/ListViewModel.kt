@@ -1,5 +1,7 @@
 package com.dknaack.healthbars.ui.screens.list
 
+import android.util.Log
+import androidx.compose.runtime.collectAsState
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dknaack.healthbars.data.HealthBarDao
@@ -9,6 +11,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class ListViewModel(
@@ -23,7 +26,7 @@ class ListViewModel(
                 SortType.END_DATE -> dao.getAllOrderedByEndDate()
             }
         }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(1000), emptyList())
 
     private val _state = MutableStateFlow(ListUiState())
     val state = combine(_state, _sortType, _healthBars) { state, sortType, healthBars ->
@@ -33,26 +36,18 @@ class ListViewModel(
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ListUiState())
 
+    init {
+        viewModelScope.launch {
+            _healthBars.collect { list ->
+                Log.d("ListViewModel", "HealthBars size = ${list.size}")
+            }
+        }
+    }
+
     fun onEvent(event: ListEvent) {
         when (event) {
-            ListEvent.CreateHealthBar -> {
-
-            }
-            is ListEvent.ViewHealthBar -> {
-
-            }
-            is ListEvent.DeleteHealthBar -> {
-                viewModelScope.launch {
-                    dao.get(event.id)?.let { dao.delete(it) }
-                }
-            }
-            is ListEvent.UpsertHealthBar -> {
-                viewModelScope.launch {
-                    dao.upsert(healthBar = event.healthBar)
-                }
-            }
-            is ListEvent.ChangeOrder -> {
-                TODO()
+            is ListEvent.Sort -> {
+                _sortType.value = event.sortType
             }
         }
     }
