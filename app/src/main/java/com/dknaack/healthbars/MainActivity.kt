@@ -65,6 +65,7 @@ class MainActivity : ComponentActivity() {
                         ListScreen(
                             state = state,
                             onEvent = viewModel::onEvent,
+                            navController = navController,
                         )
                     }
                     composable<NavItem.UpsertScreen> {

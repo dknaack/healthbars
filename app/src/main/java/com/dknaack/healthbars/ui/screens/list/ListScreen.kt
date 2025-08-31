@@ -29,12 +29,10 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
+import com.dknaack.healthbars.NavItem
 import com.dknaack.healthbars.components.HealthBarIndicator
 import com.dknaack.healthbars.data.HealthBar
 import java.time.LocalDate
@@ -50,6 +48,7 @@ import java.time.format.FormatStyle
 fun ListScreen(
     state: ListUiState,
     onEvent: (ListEvent) -> Unit,
+    navController: NavController,
     modifier: Modifier = Modifier,
 ) {
     Scaffold(
@@ -68,7 +67,9 @@ fun ListScreen(
             }
         ) },
         floatingActionButton = {
-            FloatingActionButton(onClick = { onEvent(ListEvent.CreateHealthBar) }) {
+            FloatingActionButton(onClick = {
+                navController.navigate(NavItem.UpsertScreen(null))
+            }) {
                 Icon(Icons.Default.Add, contentDescription = "Add")
             }
         },
@@ -87,7 +88,9 @@ fun ListScreen(
             ) { healthBar ->
                 HealthBarCard(
                     healthBar = healthBar,
-                    onEvent = onEvent,
+                    onClick = {
+                        navController.navigate(NavItem.ViewScreen(healthBar.id))
+                    },
                     modifier = Modifier.animateItem(),
                 )
             }
@@ -103,7 +106,7 @@ fun ListScreen(
 @Composable
 fun HealthBarCard(
     healthBar: HealthBar,
-    onEvent: (ListEvent) -> Unit,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     // Format the starting date
@@ -141,9 +144,7 @@ fun HealthBarCard(
         modifier = modifier,
     ) {
         ListItem(
-            modifier = Modifier.clickable {
-                onEvent(ListEvent.ViewHealthBar(healthBar.id))
-            },
+            modifier = Modifier.clickable { onClick() },
             headlineContent = {
                 Text(
                     healthBar.name,
