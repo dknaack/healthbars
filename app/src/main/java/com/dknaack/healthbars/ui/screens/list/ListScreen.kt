@@ -52,8 +52,6 @@ fun ListScreen(
     onEvent: (ListEvent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var contextHealthBarId by rememberSaveable { mutableStateOf<Long?>(null) }
-
     Scaffold(
         topBar = { TopAppBar(
             title = { Text("Health Bars") },
