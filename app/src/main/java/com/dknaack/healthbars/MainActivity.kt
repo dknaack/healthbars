@@ -6,16 +6,13 @@ import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -28,9 +25,8 @@ import com.dknaack.healthbars.data.AppDatabase
 import com.dknaack.healthbars.ui.screens.list.ListScreen
 import com.dknaack.healthbars.ui.screens.list.ListViewModel
 import com.dknaack.healthbars.ui.screens.overview.OverviewEvent
-import com.dknaack.healthbars.ui.screens.overview.OverviewViewModel
 import com.dknaack.healthbars.ui.screens.overview.OverviewScreen
-import com.dknaack.healthbars.ui.screens.overview.OverviewState
+import com.dknaack.healthbars.ui.screens.overview.OverviewViewModel
 import com.dknaack.healthbars.ui.screens.upsert.UpsertEvent
 import com.dknaack.healthbars.ui.screens.upsert.UpsertScreen
 import com.dknaack.healthbars.ui.screens.upsert.UpsertViewModel

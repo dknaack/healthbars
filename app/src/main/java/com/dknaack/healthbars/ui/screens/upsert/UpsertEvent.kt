@@ -1,6 +1,5 @@
 package com.dknaack.healthbars.ui.screens.upsert
 
-import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 
 sealed interface UpsertEvent {
