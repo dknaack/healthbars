@@ -10,7 +10,7 @@ import kotlin.math.min
 
 @Entity(tableName = "health_bars")
 data class HealthBar(
-    @PrimaryKey val id: Long,
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val name: String,
     @ColumnInfo(name = "start_date") val startDate: LocalDate,
     @ColumnInfo(name = "end_date") val endDate: LocalDate,
