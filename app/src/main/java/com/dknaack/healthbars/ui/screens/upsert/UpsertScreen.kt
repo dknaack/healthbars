@@ -10,12 +10,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.ArrowDropUp
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.outlined.Save
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DropdownMenu
@@ -39,61 +41,77 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.dknaack.healthbars.data.HealthBar
-import java.time.Instant
-import java.time.LocalDate
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
-import java.time.format.FormatStyle
 import java.time.temporal.ChronoUnit
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UpsertScreen(
     navController: NavController,
-    onUpsert: (HealthBar) -> Unit,
+    state: UpsertState,
+    onEvent: (UpsertEvent) -> Unit,
     modifier: Modifier = Modifier,
-    healthBar: HealthBar? = null,
 ) {
-    var name by remember { mutableStateOf(healthBar?.name ?: "") }
-
     var showDatePicker by remember { mutableStateOf(false) }
+    var showDiscardDialog by remember { mutableStateOf(false) }
     val datePickerState = rememberDatePickerState()
-    val dateFormatter = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)
-    val startDate = healthBar?.startDate ?: datePickerState.selectedDateMillis?.let {
-        val instant = Instant.ofEpochMilli(it)
-        val zoneId = ZoneId.systemDefault()
-        instant.atZone(zoneId).toLocalDate()
-    } ?: LocalDate.now()
 
     var expanded by remember { mutableStateOf(false) }
-    var periodUnit by remember { mutableStateOf(ChronoUnit.DAYS) }
-    var periodValue by remember { mutableStateOf("") }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(if (healthBar != null) "Edit" else "New") },
+                title = { Text(
+                    if (state.id == 0L)
+                        "New"
+                    else
+                        "Edit"
+                ) },
                 navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
+                    IconButton(onClick = {
+                        if (state.isDirty) {
+                            showDiscardDialog = true
+                        } else {
+                            navController.popBackStack()
+                        }
+                    }) {
                         Icon(imageVector = Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "Discard")
+                    }
+
+                    if (showDiscardDialog) {
+                        AlertDialog(
+                            onDismissRequest = { showDiscardDialog = false },
+                            confirmButton = {
+                                TextButton(onClick = {
+                                    onEvent(UpsertEvent.Save)
+                                    navController.popBackStack()
+                                    showDiscardDialog = false
+                                }) {
+                                    Text("Keep editing")
+                                }
+                            },
+                            dismissButton = {
+                                TextButton(onClick = {
+                                    navController.popBackStack()
+                                    showDiscardDialog = false
+                                }) {
+                                    Text("Discard")
+                                }
+                            },
+                            title = {
+                                Text("Discard changes")
+                            },
+                            text = {
+                                Text("Are you sure you want to discard your changes?")
+                            },
+                        )
                     }
                 },
                 actions = {
                     IconButton(onClick = {
-                        val endDate = startDate.plus(periodValue.toLong(), periodUnit)
-
-                        onUpsert(
-                            HealthBar(
-                                id = healthBar?.id ?: System.currentTimeMillis(),
-                                name = name,
-                                startDate = startDate,
-                                endDate = endDate,
-                            )
-                        )
-
+                        onEvent(UpsertEvent.Save)
                         navController.popBackStack()
                     }) {
                         Icon(imageVector = Icons.Outlined.Save, contentDescription = "Discard")
@@ -111,16 +129,16 @@ fun UpsertScreen(
         ) {
             Text("Name")
             OutlinedTextField(
-                value = name,
-                onValueChange = { name = it },
+                value = state.name,
+                onValueChange = { onEvent(UpsertEvent.SetName(it)) },
                 modifier = Modifier.fillMaxWidth(),
             )
 
             // Date Field
             Text("Start Date")
             OutlinedTextField(
-                value = dateFormatter.format(startDate),
-                onValueChange = { },
+                value = state.startDate,
+                onValueChange = { onEvent(UpsertEvent.SetStartDate(it)) },
                 modifier = Modifier.fillMaxWidth(),
                 readOnly = true,
                 trailingIcon = {
@@ -135,14 +153,17 @@ fun UpsertScreen(
 
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(
-                    value = periodValue,
-                    onValueChange = { periodValue = it },
+                    value = state.duration,
+                    onValueChange = { onEvent(UpsertEvent.SetDuration(it)) },
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Number,
+                    ),
                     modifier = Modifier.fillMaxWidth(.5f),
                 )
 
                 Box(modifier = Modifier.height(IntrinsicSize.Min)) {
                     OutlinedTextField(
-                        value = periodUnit.toString(),
+                        value = state.durationUnit.toString(),
                         modifier = Modifier.fillMaxWidth(),
                         trailingIcon = {
                             val icon = if (expanded) Icons.Filled.ArrowDropUp else Icons.Filled.ArrowDropDown
@@ -156,16 +177,10 @@ fun UpsertScreen(
                     Surface(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(top = 8.dp)
                             .clip(MaterialTheme.shapes.extraSmall)
                             .clickable { expanded = true },
                         color = Color.Transparent,
                     ) {}
-
-                    fun selectUnit(unit: ChronoUnit) {
-                        periodUnit = unit
-                        expanded = false
-                    }
 
                     DropdownMenu(
                         expanded = expanded,
@@ -173,19 +188,31 @@ fun UpsertScreen(
                     ) {
                         DropdownMenuItem(
                             text = { Text("Days") },
-                            onClick = { selectUnit(ChronoUnit.DAYS) },
+                            onClick = {
+                                onEvent(UpsertEvent.SetDurationUnit(ChronoUnit.DAYS))
+                                expanded = false
+                            },
                         )
                         DropdownMenuItem(
                             text = { Text("Weeks") },
-                            onClick = { selectUnit(ChronoUnit.WEEKS) },
+                            onClick = {
+                                onEvent(UpsertEvent.SetDurationUnit(ChronoUnit.WEEKS))
+                                expanded = false
+                            },
                         )
                         DropdownMenuItem(
                             text = { Text("Months") },
-                            onClick = { selectUnit(ChronoUnit.MONTHS) },
+                            onClick = {
+                                onEvent(UpsertEvent.SetDurationUnit(ChronoUnit.MONTHS))
+                                expanded = false
+                            },
                         )
                         DropdownMenuItem(
                             text = { Text("Years") },
-                            onClick = { selectUnit(ChronoUnit.YEARS) },
+                            onClick = {
+                                onEvent(UpsertEvent.SetDurationUnit(ChronoUnit.YEARS))
+                                expanded = false
+                            },
                         )
                     }
                 }
@@ -196,7 +223,10 @@ fun UpsertScreen(
             DatePickerDialog(
                 onDismissRequest = { showDatePicker = false },
                 confirmButton = {
-                    TextButton(onClick = { showDatePicker = false }) {
+                    TextButton(onClick = {
+                        onEvent(UpsertEvent.SetStartDateMillis(datePickerState.selectedDateMillis))
+                        showDatePicker = false
+                    }) {
                         Text("OK")
                     }
                 },
