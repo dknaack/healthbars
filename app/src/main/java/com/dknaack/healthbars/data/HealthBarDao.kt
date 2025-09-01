@@ -15,7 +15,7 @@ interface HealthBarDao {
     suspend fun delete(healthBar: HealthBar)
 
     @Query("SELECT * FROM health_bars WHERE id = :id")
-    suspend fun get(id: Long): HealthBar?
+    fun get(id: Long): Flow<HealthBar?>
 
     @Query("SELECT * FROM health_bars ORDER BY name")
     fun getAll(): Flow<List<HealthBar>>
