@@ -27,6 +27,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -68,29 +69,33 @@ fun ListScreen(
                 }
                 IconButton(onClick = { isSortMenuExpanded = true }) {
                     Icon(imageVector = Icons.AutoMirrored.Filled.Sort, contentDescription = "Sort")
-
-                    DropdownMenu(
-                        expanded = isSortMenuExpanded,
-                        onDismissRequest = { isSortMenuExpanded = false },
-                    ) {
-                        DropdownMenuItem(
-                            text = { Text("Name") },
-                            onClick = {
-                                onEvent(ListEvent.Sort(SortType.NAME))
-                                isSortMenuExpanded = false
-                            },
-                        )
-                        DropdownMenuItem(
-                            text = { Text("End Date") },
-                            onClick = {
-                                onEvent(ListEvent.Sort(SortType.END_DATE))
-                                isSortMenuExpanded = false
-                            },
-                        )
-                    }
                 }
-                IconButton(onClick = { }) {
-                    Icon(imageVector = Icons.Default.MoreVert, contentDescription = "More")
+
+                fun onClick(sortType: SortType) {
+                    onEvent(ListEvent.Sort(sortType))
+                    isSortMenuExpanded = false
+                }
+
+                DropdownMenu(
+                    expanded = isSortMenuExpanded,
+                    onDismissRequest = { isSortMenuExpanded = false },
+                ) {
+                    DropdownMenuItem(
+                        text = { Text("Name") },
+                        trailingIcon = {
+                            val selected = (state.sortType == SortType.NAME)
+                            RadioButton(selected = selected, onClick = { onClick(SortType.NAME) })
+                        },
+                        onClick = { onClick(SortType.NAME) },
+                    )
+                    DropdownMenuItem(
+                        text = { Text("End Date") },
+                        trailingIcon = {
+                            val selected = (state.sortType == SortType.END_DATE)
+                            RadioButton(selected = selected, onClick = { onClick(SortType.END_DATE) })
+                        },
+                        onClick = { onClick(SortType.END_DATE) },
+                    )
                 }
             }
         ) },
