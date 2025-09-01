@@ -36,14 +36,6 @@ class ListViewModel(
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ListUiState())
 
-    init {
-        viewModelScope.launch {
-            _healthBars.collect { list ->
-                Log.d("ListViewModel", "HealthBars size = ${list.size}")
-            }
-        }
-    }
-
     fun onEvent(event: ListEvent) {
         when (event) {
             is ListEvent.Sort -> {
