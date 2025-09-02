@@ -4,4 +4,5 @@ sealed interface OverviewEvent {
     data class Show(val healthBarId: Long): OverviewEvent
     data object Refresh: OverviewEvent
     data object Skip: OverviewEvent
+    data object Delete: OverviewEvent
 }

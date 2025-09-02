@@ -75,6 +75,14 @@ class OverviewViewModel(
                     }
                 }
             }
+            OverviewEvent.Delete -> {
+                viewModelScope.launch {
+                    state.value.healthBar?.let { healthBar ->
+                        healthBarDao.delete(healthBar)
+                        logDao.deleteLogsForHealthBar(healthBar.id)
+                    }
+                }
+            }
         }
     }
 }
