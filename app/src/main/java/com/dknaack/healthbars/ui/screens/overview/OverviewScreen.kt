@@ -20,6 +20,7 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -33,9 +34,14 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -48,6 +54,7 @@ import androidx.navigation.NavController
 import com.dknaack.healthbars.NavItem
 import com.dknaack.healthbars.components.HealthBarIndicator
 import com.dknaack.healthbars.data.LogAction
+import com.dknaack.healthbars.ui.screens.upsert.UpsertEvent
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
@@ -64,6 +71,8 @@ fun OverviewScreen(
     onEvent: (OverviewEvent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    var showDeleteDialog by remember { mutableStateOf(false) }
+
     if (state.healthBar == null) {
         Box(
             modifier = Modifier.fillMaxSize(),
@@ -102,12 +111,36 @@ fun OverviewScreen(
                             )
                         }
                         IconButton(onClick = {
-                            onEvent(OverviewEvent.Delete)
-                            navController.popBackStack()
+                            showDeleteDialog = true
                         }) {
                             Icon(
                                 imageVector = Icons.Default.Delete,
                                 contentDescription = "Delete",
+                            )
+                        }
+
+                        if (showDeleteDialog) {
+                            AlertDialog(
+                                onDismissRequest = { showDeleteDialog = false },
+                                dismissButton = {
+                                    TextButton(onClick = {
+                                        showDeleteDialog = false
+                                    }) {
+                                        Text("Cancel")
+                                    }
+                                },
+                                confirmButton = {
+                                    TextButton(onClick = {
+                                        onEvent(OverviewEvent.Delete)
+                                        navController.popBackStack()
+                                        showDeleteDialog = false
+                                    }) {
+                                        Text("Delete")
+                                    }
+                                },
+                                text = {
+                                    Text("Are you sure you want to delete this entry?")
+                                },
                             )
                         }
                     },
