@@ -135,7 +135,7 @@ fun ListScreen(
 @Composable
 fun HealthBarCard(
     healthBar: HealthBar,
-    onClick: () -> Unit,
+    onClick: () -> Unit = { },
     modifier: Modifier = Modifier,
 ) {
     // Format the starting date
