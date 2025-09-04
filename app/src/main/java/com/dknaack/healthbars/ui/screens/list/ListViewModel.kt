@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 
 class ListViewModel(
     private val dao: HealthBarDao,
@@ -36,6 +37,23 @@ class ListViewModel(
         when (event) {
             is ListEvent.Sort -> {
                 _sortType.value = event.sortType
+            }
+            ListEvent.BeginSearch -> {
+                _state.update { it.copy(
+                    isSearching = true,
+                    query = "",
+                ) }
+            }
+            is ListEvent.SetQuery -> {
+                _state.update { it.copy(
+                    query = event.query,
+                ) }
+            }
+            ListEvent.EndSearch -> {
+                _state.update { it.copy(
+                    isSearching = false,
+                    query = "",
+                ) }
             }
         }
     }

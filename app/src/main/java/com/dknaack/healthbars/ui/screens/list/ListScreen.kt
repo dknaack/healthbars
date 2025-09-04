@@ -1,5 +1,6 @@
 package com.dknaack.healthbars.ui.screens.list
 
+import android.provider.CalendarContract
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -15,6 +16,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
@@ -24,20 +26,30 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldColors
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import androidx.room.util.query
 import com.dknaack.healthbars.NavItem
 import com.dknaack.healthbars.components.HealthBarIndicator
 import com.dknaack.healthbars.data.HealthBar
@@ -58,43 +70,73 @@ fun ListScreen(
     modifier: Modifier = Modifier,
 ) {
     var isSortMenuExpanded by remember { mutableStateOf(false) }
+    var focusRequester = remember { FocusRequester() }
+
+    LaunchedEffect(state.isSearching) {
+        if (state.isSearching) {
+            focusRequester.requestFocus()
+        }
+    }
 
     Scaffold(
         topBar = { TopAppBar(
-            title = { Text("Health Bars") },
+            title = {
+                if (state.isSearching) {
+                    CompositionLocalProvider(
+                        LocalTextStyle provides MaterialTheme.typography.bodyMedium
+                    ) {
+                        SearchBarDefaults.InputField(
+                            query = state.query,
+                            onQueryChange = { onEvent(ListEvent.SetQuery(it)) },
+                            onSearch = { },
+                            expanded = true,
+                            onExpandedChange = { },
+                            modifier = Modifier.focusRequester(focusRequester),
+                        )
+                    }
+                } else {
+                    Text("Health Bars")
+                }
+            },
             actions = {
-                IconButton(onClick = { }) {
-                    Icon(imageVector = Icons.Default.Search, contentDescription = "Search")
-                }
-                IconButton(onClick = { isSortMenuExpanded = true }) {
-                    Icon(imageVector = Icons.AutoMirrored.Filled.Sort, contentDescription = "Sort")
-                }
+                if (state.isSearching) {
+                    IconButton(onClick = { onEvent(ListEvent.EndSearch) }) {
+                        Icon(imageVector = Icons.Default.Clear, contentDescription = "Discard")
+                    }
+                } else {
+                    IconButton(onClick = { onEvent(ListEvent.BeginSearch) }) {
+                        Icon(imageVector = Icons.Default.Search, contentDescription = "Search")
+                    }
+                    IconButton(onClick = { isSortMenuExpanded = true }) {
+                        Icon(imageVector = Icons.AutoMirrored.Filled.Sort, contentDescription = "Sort")
+                    }
 
-                fun onClick(sortType: SortType) {
-                    onEvent(ListEvent.Sort(sortType))
-                    isSortMenuExpanded = false
-                }
+                    fun onClick(sortType: SortType) {
+                        onEvent(ListEvent.Sort(sortType))
+                        isSortMenuExpanded = false
+                    }
 
-                DropdownMenu(
-                    expanded = isSortMenuExpanded,
-                    onDismissRequest = { isSortMenuExpanded = false },
-                ) {
-                    DropdownMenuItem(
-                        text = { Text("Name") },
-                        trailingIcon = {
-                            val selected = (state.sortType == SortType.NAME)
-                            RadioButton(selected = selected, onClick = { onClick(SortType.NAME) })
-                        },
-                        onClick = { onClick(SortType.NAME) },
-                    )
-                    DropdownMenuItem(
-                        text = { Text("End Date") },
-                        trailingIcon = {
-                            val selected = (state.sortType == SortType.END_DATE)
-                            RadioButton(selected = selected, onClick = { onClick(SortType.END_DATE) })
-                        },
-                        onClick = { onClick(SortType.END_DATE) },
-                    )
+                    DropdownMenu(
+                        expanded = isSortMenuExpanded,
+                        onDismissRequest = { isSortMenuExpanded = false },
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text("Name") },
+                            trailingIcon = {
+                                val selected = (state.sortType == SortType.NAME)
+                                RadioButton(selected = selected, onClick = { onClick(SortType.NAME) })
+                            },
+                            onClick = { onClick(SortType.NAME) },
+                        )
+                        DropdownMenuItem(
+                            text = { Text("End Date") },
+                            trailingIcon = {
+                                val selected = (state.sortType == SortType.END_DATE)
+                                RadioButton(selected = selected, onClick = { onClick(SortType.END_DATE) })
+                            },
+                            onClick = { onClick(SortType.END_DATE) },
+                        )
+                    }
                 }
             }
         ) },

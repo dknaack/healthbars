@@ -5,6 +5,8 @@ import com.dknaack.healthbars.data.HealthBar
 data class ListUiState(
     val healthBars: List<HealthBar> = emptyList(),
     val sortType: SortType = SortType.NAME,
+    val isSearching: Boolean = false,
+    val query: String = "",
 )
 
 enum class SortType {
