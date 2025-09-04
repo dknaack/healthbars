@@ -26,7 +26,7 @@ class UpsertViewModel(
 
     val state = _state.asStateFlow()
 
-    fun parseDateFlexible(input: String): LocalDate? {
+    private fun parseDateFlexible(input: String): LocalDate? {
         val formats = listOf(
             DateTimeFormatter.ISO_LOCAL_DATE,
             DateTimeFormatter.ofPattern("dd/MM/yyyy"),
@@ -42,6 +42,12 @@ class UpsertViewModel(
             }
         }
         return null // parsing failed
+    }
+
+    private fun reset() {
+        _state.update {
+            UpsertState(startDate = _dateFormatter.format(LocalDate.now()))
+        }
     }
 
     fun onEvent(event: UpsertEvent) {
@@ -65,13 +71,13 @@ class UpsertViewModel(
                         dao.upsert(healthBar)
                     }
 
-                    _state.update { UpsertState() }
+                    reset()
                 } catch (e: DateTimeParseException) {
                     throw e
                 }
             }
             is UpsertEvent.Discard -> {
-                _state.update { UpsertState() }
+                reset()
             }
             is UpsertEvent.SetId -> {
                 viewModelScope.launch {
@@ -88,7 +94,7 @@ class UpsertViewModel(
                                 )
                             }
                         } else {
-                            _state.update { UpsertState() }
+                            reset()
                         }
                     }
                 }
