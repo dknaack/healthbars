@@ -22,4 +22,7 @@ interface HealthBarDao {
 
     @Query("SELECT * FROM health_bars ORDER BY end_date ASC")
     fun getAllOrderedByEndDate(): Flow<List<HealthBar>>
+
+    @Query("SELECT * FROM health_bars WHERE name LIKE '%' || :name || '%'")
+    fun findByName(name: String): Flow<List<HealthBar>>
 }

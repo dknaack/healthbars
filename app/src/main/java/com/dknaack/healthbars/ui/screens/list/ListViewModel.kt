@@ -14,29 +14,31 @@ import kotlinx.coroutines.flow.update
 class ListViewModel(
     private val dao: HealthBarDao,
 ): ViewModel() {
-    private val _sortType = MutableStateFlow(SortType.NAME)
+    private val _state = MutableStateFlow(ListUiState())
     @OptIn(ExperimentalCoroutinesApi::class)
-    private val _healthBars = _sortType
-        .flatMapLatest { sortType ->
-            when (sortType) {
-                SortType.NAME -> dao.getAll()
-                SortType.END_DATE -> dao.getAllOrderedByEndDate()
+    private val _healthBars = _state
+        .flatMapLatest { state ->
+            if (state.isSearching) {
+                dao.findByName(state.query)
+            } else {
+                when (state.sortType) {
+                    SortType.NAME -> dao.getAll()
+                    SortType.END_DATE -> dao.getAllOrderedByEndDate()
+                }
             }
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(1000), emptyList())
 
-    private val _state = MutableStateFlow(ListUiState())
-    val state = combine(_state, _sortType, _healthBars) { state, sortType, healthBars ->
-        state.copy(
-            healthBars = healthBars,
-            sortType = sortType
-        )
+    val state = combine(_state, _healthBars) { state, healthBars ->
+        state.copy(healthBars = healthBars)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ListUiState())
 
     fun onEvent(event: ListEvent) {
         when (event) {
             is ListEvent.Sort -> {
-                _sortType.value = event.sortType
+                _state.update { it.copy(
+                    sortType = event.sortType,
+                ) }
             }
             ListEvent.BeginSearch -> {
                 _state.update { it.copy(
