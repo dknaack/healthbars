@@ -3,6 +3,9 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM"
+        tools:ignore="ExactAlarmPolicy" />
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -30,6 +33,7 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/health_bar_widget_info" />
         </receiver>
+        <receiver android:name=".AlarmReceiver" />
     </application>
 
 </manifest>

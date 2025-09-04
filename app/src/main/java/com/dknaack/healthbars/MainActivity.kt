@@ -1,5 +1,6 @@
 package com.dknaack.healthbars
 
+import android.app.AlarmManager
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -44,6 +45,8 @@ import com.dknaack.healthbars.ui.screens.upsert.UpsertScreen
 import com.dknaack.healthbars.ui.screens.upsert.UpsertViewModel
 import com.dknaack.healthbars.ui.theme.HealthBarsTheme
 import kotlinx.serialization.Serializable
+import java.time.LocalDateTime
+import java.time.ZoneId
 import java.util.jar.Manifest
 
 class MainActivity : ComponentActivity() {
@@ -137,13 +140,32 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    fun registerAlarm() {
+        val alarmManager = getSystemService(AlarmManager::class.java)
+        val intent = Intent(this, AlarmReceiver::class.java).apply {
+            putExtra("EXTRA_MESSAGE", "Hello, world!")
+        }
+
+        alarmManager.setExactAndAllowWhileIdle(
+            AlarmManager.RTC_WAKEUP,
+            LocalDateTime.now()
+                .plusSeconds(10)
+                .atZone(ZoneId.systemDefault())
+                .toEpochSecond() * 1000,
+            PendingIntent.getBroadcast(
+                this,
+                "Hello".hashCode(),
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+            )
+        )
+    }
+
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         createNotificationChannel()
-        showNotification(1)
-        showNotification(2)
-        showNotification(3)
+        registerAlarm()
 
         setContent {
             HealthBarsTheme {
